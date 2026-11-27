@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { joinCohort, signIn } from "@/app/actions";
-import { ActionForm, Field } from "@/components/action-form";
+import { ActionForm } from "@/components/action-form";
+import { Field } from "@/components/ui/field";
 import { Header, Hero, Sky } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

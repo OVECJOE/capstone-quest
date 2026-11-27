@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { decideProject, redraftCriteria } from "@/app/actions";
-import { ActionForm, Field } from "@/components/action-form";
+import { ActionForm } from "@/components/action-form";
+import { Field } from "@/components/ui/field";
 import { CriteriaEditor } from "@/components/criteria-editor";
 import { LiveRefresh } from "@/components/live-refresh";
 import { Header, Hero, Sky } from "@/components/shell";
@@ -50,8 +51,8 @@ export default async function ProposalPage({ params }: PageProps<"/c/[cohortId]/
                   <ActionForm action={redraftCriteria}>{hidden}<Button variant="outline" size="sm" className="self-start">Draft them again</Button></ActionForm>
                 </>
               ) : null}
-              {/* The key swaps in the draft when it arrives, and a new version when the student edits. */}
-              <ActionForm action={decideProject} key={`${project.version}-${project.criteria ? "drafted" : "empty"}`}>
+              {/* The key starts the form again when the student edits their proposal. */}
+              <ActionForm action={decideProject} requireClick key={project.version}>
                 {hidden}
                 <input type="hidden" name="version" value={project.version} />
                 <CriteriaEditor initial={project.criteria} />
@@ -60,7 +61,7 @@ export default async function ProposalPage({ params }: PageProps<"/c/[cohortId]/
                 </Field>
                 <div className="flex flex-wrap gap-4">
                   <Button size="lg" name="decision" value="approve">Approve idea and criteria</Button>
-                  <Button size="lg" variant="outline" name="decision" value="changes">Ask for changes</Button>
+                  <Button size="lg" variant="outline" name="decision" value="changes" formNoValidate>Ask for changes</Button>
                 </div>
               </ActionForm>
             </CardContent>

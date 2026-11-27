@@ -1,6 +1,6 @@
 import "server-only";
 import { parseRepoLink } from "./links";
-import { LIMITS, selectFiles } from "./select";
+import { selectFiles, selectGistFiles } from "./select";
 import { InputError, type Source, type SourceFile } from "./types";
 
 async function api<T>(path: string): Promise<T> {
@@ -76,12 +76,9 @@ async function readGist(id: string, pinned: string | null, pin: Pin): Promise<So
     await pin(version);
   }
   const all = Object.values(gist.files);
-  const wanted = new Set(selectFiles(all.map((f) => ({ path: f.filename, size: f.size }))).map((f) => f.path));
-  // Gists often hold extensionless or unusual files, so fall back to every small one.
+  const wanted = new Set(selectGistFiles(all.map((f) => ({ path: f.filename, size: f.size }))).map((f) => f.path));
   const files = all
-    .filter((f) => (wanted.size ? wanted.has(f.filename) : f.size <= LIMITS.fileBytes))
-    .filter((f) => typeof f.content === "string" && !f.truncated)
-    .slice(0, LIMITS.files)
+    .filter((f) => wanted.has(f.filename) && typeof f.content === "string" && !f.truncated)
     .map((f) => ({ path: f.filename, content: f.content as string }));
   return {
     description: `GitHub gist. ${gist.description ?? ""}`.trim(),

@@ -8,5 +8,10 @@ export function failure(error: { code?: string; message: string }): FormState {
   return { error: "Something went wrong. Please try again." };
 }
 
-export const text = (data: FormData, key: string) => String(data.get(key) ?? "").trim();
+/** Browsers send line breaks as two characters, which would break the length limits shown on screen. */
+export const clean = (value: unknown) => String(value ?? "").replace(/\r\n?/g, "\n").trim();
+export const text = (data: FormData, key: string) => clean(data.get(key));
+/** Accepts a bare invite code or a pasted invite link, with or without a trailing slash or query. */
+export const inviteCode = (value: string) =>
+  value.trim().split(/[?#]/)[0].replace(/\/+$/, "").split("/").pop() ?? "";
 export const isId = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);

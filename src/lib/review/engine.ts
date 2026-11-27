@@ -28,7 +28,11 @@ export async function runCriteriaDraft(projectId: string) {
   }
 }
 
+// The platform stops the route at 300 seconds. Give up earlier, so the failure is still recorded.
+const REVIEW_TIME_LIMIT = 270_000;
+
 export async function runReview(submissionId: string) {
+  const signal = AbortSignal.timeout(REVIEW_TIME_LIMIT);
   const db = adminClient();
   const claim = await db.rpc("claim_review", { p_submission: submissionId });
   if (claim.error) return console.error("Could not claim review", submissionId, claim.error);
@@ -39,7 +43,12 @@ export async function runReview(submissionId: string) {
     if (done.error) console.error("Could not close review", submissionId, done.error);
   };
 
+  // Handing back is only for work that was never read. A failed re-run must not wipe an earlier draft.
+  let reviewedBefore = false;
   try {
+    const earlier = await db.from("reviews").select("submission_id").eq("submission_id", submissionId).maybeSingle();
+    if (earlier.error) throw earlier.error;
+    reviewedBefore = Boolean(earlier.data);
     const { data, error } = await db
       .from("submissions")
       .select("repo_url, zip_path, live_url, pinned_ref, pinned_at, created_at, projects(title, summary, features, criteria)")
@@ -61,7 +70,7 @@ export async function runReview(submissionId: string) {
       return readZip(new Uint8Array(await file.data.arrayBuffer()));
     };
     const [source, live] = await Promise.all([read(), data.live_url ? checkLive(data.live_url) : null]);
-    const draft = await reviewProject({ proposal: project, criteria: project.criteria, source, live });
+    const draft = await reviewProject({ proposal: project, criteria: project.criteria, source, live, signal });
     const late = lateReadWarning(data.created_at, pinnedAt);
     if (late) draft.concerns.unshift(late);
     const saved = await db.from("reviews").upsert({ submission_id: submissionId, draft, created_at: new Date().toISOString() });
@@ -69,7 +78,7 @@ export async function runReview(submissionId: string) {
     await finish("ready", null);
   } catch (error) {
     console.error("Review failed", submissionId, error);
-    if (error instanceof InputError) await finish("void", `${error.message} This attempt was not counted.`);
+    if (error instanceof InputError && !reviewedBefore) await finish("void", `${error.message} This attempt was not counted.`);
     else await finish("failed", "The automatic review hit a problem. Your mentor can run it again.");
   }
 }

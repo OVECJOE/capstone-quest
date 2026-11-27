@@ -1,8 +1,10 @@
 "use client";
 
 import { submitProject, submitZip } from "@/app/actions";
-import { ActionForm, Field } from "@/components/action-form";
+import { ActionForm } from "@/components/action-form";
+import { Field } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
+import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,7 +60,7 @@ export function SubmitForm({ cohortId, projectId, userId }: { cohortId: string; 
         <ActionForm action={upload}>
           {hidden}
           <Field label={<Label htmlFor="file">Zip of your project, up to 20 MB</Label>} hint="Leave out node_modules, build folders and any file holding secrets.">
-            <Input id="file" name="file" type="file" accept=".zip,application/zip" required className="py-3" />
+            <FileInput id="file" name="file" accept=".zip,application/zip" required prompt="Drop your zip here" />
           </Field>
           <LiveField id="zip-live" />
           <Button size="lg" className="self-start">Upload and launch</Button>

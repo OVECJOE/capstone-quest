@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { approveGrade, rerunReview, voidSubmission } from "@/app/actions";
-import { ActionForm, Field } from "@/components/action-form";
+import { ActionForm } from "@/components/action-form";
+import { Field } from "@/components/ui/field";
 import { ExtLink } from "@/components/ext-link";
 import { LiveRefresh } from "@/components/live-refresh";
 import { Rubric } from "@/components/rubric";
@@ -9,6 +10,8 @@ import { Header, Hero, Sky } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Disclosure } from "@/components/ui/disclosure";
+import { NumberInput } from "@/components/ui/number-input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,9 +87,9 @@ export default async function ReviewPage({ params }: PageProps<"/c/[cohortId]/re
             <Card>
               <CardHeader><CardTitle>What the review found</CardTitle><CardDescription>The code was read, not run. Check anything that matters.</CardDescription></CardHeader>
               <CardContent>
-                {row.status === "failed" ? <p className="rounded-2xl border-3 border-ink bg-[#FFD84A] px-5 py-3 font-bold">The latest run failed. These notes are from an earlier run.</p> : null}
+                {row.status === "failed" ? <p className="rounded-2xl border-3 border-ink bg-sun px-5 py-3 font-bold">The latest run failed. These notes are from an earlier run.</p> : null}
                 {draft.concerns.length ? (
-                  <div className="rounded-2xl border-3 border-ink bg-[#FFE1D6] px-5 py-3">
+                  <div className="rounded-2xl border-3 border-ink bg-blush px-5 py-3">
                     <h3 className="text-xl">Look closely at</h3>
                     <ul className="list-disc pl-5">{draft.concerns.map((c, i) => <li key={i} className="break-words">{c}</li>)}</ul>
                   </div>
@@ -103,8 +106,9 @@ export default async function ReviewPage({ params }: PageProps<"/c/[cohortId]/re
                 {draft.live ? (
                   <p className="break-words"><strong>Live link:</strong> {draft.live.error ?? `answered ${draft.live.status} in ${(draft.live.milliseconds / 1000).toFixed(1)} seconds${draft.live.title ? `, titled “${draft.live.title}”` : ""}`}. One plain request, without running the page’s scripts, so open it yourself too.</p>
                 ) : null}
-                <details><summary className="cursor-pointer font-extrabold">{draft.filesRead.length} files read, {draft.filesSkipped} left out</summary>
-                  <ul className="pt-2">{draft.filesRead.map((f) => <li key={f} className="break-all">{f}</li>)}</ul></details>
+                <Disclosure label={`${draft.filesRead.length} files read, ${draft.filesSkipped} left out`}>
+                  <ul>{draft.filesRead.map((f) => <li key={f} className="break-all">{f}</li>)}</ul>
+                </Disclosure>
               </CardContent>
             </Card>
           ) : <Card><CardContent><p>{busy ? "The review is running. This page updates by itself." : "There is no AI draft for this attempt."}</p></CardContent></Card>}
@@ -117,7 +121,7 @@ export default async function ReviewPage({ params }: PageProps<"/c/[cohortId]/re
             <Card>
               <CardHeader><CardTitle>Your grade</CardTitle><CardDescription>Change anything. The student sees only what you approve.</CardDescription></CardHeader>
               <CardContent>
-                <ActionForm action={approveGrade} key={review?.created_at ?? "manual"}>
+                <ActionForm action={approveGrade} requireClick key={review?.created_at ?? "manual"}>
                   {hidden}
                   {criteria.map((c, i) => {
                     const score = draft?.scores.find((s) => s.name === c.name);
@@ -126,7 +130,7 @@ export default async function ReviewPage({ params }: PageProps<"/c/[cohortId]/re
                         <div><h3 className="text-xl">{c.name}</h3><p>{c.description}</p></div>
                         <input type="hidden" name="name" value={c.name} />
                         <Field label={<Label htmlFor={`score-${i}`}>Score out of {c.points}</Label>}>
-                          <Input id={`score-${i}`} name="score" type="number" min={0} max={c.points} step={1} required defaultValue={score?.score} />
+                          <NumberInput id={`score-${i}`} name="score" min={0} max={c.points} required defaultValue={score?.score} />
                         </Field>
                         <Field label={<Label htmlFor={`comment-${i}`}>Comment</Label>}>
                           <Textarea id={`comment-${i}`} name="comment" maxLength={4000} defaultValue={score?.comment} />

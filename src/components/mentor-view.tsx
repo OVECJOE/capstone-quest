@@ -1,22 +1,24 @@
 import Link from "next/link";
 import { decideJoin, removeStudent, saveEmails, updateCohort } from "@/app/actions";
-import { ActionForm, Field } from "@/components/action-form";
+import { ActionForm } from "@/components/action-form";
+import { Field } from "@/components/ui/field";
 import { CohortWorld } from "@/components/cohort-world";
 import { ExtLink } from "@/components/ext-link";
-import { DeadlineInput } from "@/components/deadline-input";
 import { LiveRefresh } from "@/components/live-refresh";
 import { Hero } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { CopyField } from "@/components/ui/copy-field";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { Disclosure } from "@/components/ui/disclosure";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { Cohort, Plot, Project, Submission } from "@/lib/data";
 import { isOpen, STATUS_NAMES } from "@/lib/journey";
-import { cn } from "@/lib/utils";
 
 export type Student = { user_id: string; profiles: { full_name: string | null; github_login: string | null } };
 
@@ -120,15 +122,14 @@ export function MentorView({ cohort, projects, submissions, students, requests, 
                     ? <Button asChild size="sm" variant="outline"><Link href={`/c/${cohort.id}/review/${latest.id}`}>{latest.grades.total} out of 100</Link></Button>
                     : <Badge variant="muted">{project ? (project.status === "approved" ? (submissions.some((s) => s.project_id === project.id && isOpen(s.status)) ? "In review" : "Building") : project.status === "proposed" ? "Proposed" : "Revising") : "Not started"}</Badge>}
                   </div>
-                  <details className="w-full">
-                    <summary className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-fit cursor-pointer list-none [&::-webkit-details-marker]:hidden")}>Remove</summary>
-                    <ActionForm action={removeStudent} className="mt-3 gap-2">
+                  <Disclosure label="Remove">
+                    <ActionForm action={removeStudent} className="gap-2">
                       <input type="hidden" name="cohortId" value={cohort.id} />
                       <input type="hidden" name="userId" value={student.user_id} />
                       <p>They lose access straight away and come off the email list. Their work is kept and returns if you let them back in.</p>
                       <Button size="sm" className="self-start">Yes, remove {name(student.user_id)}</Button>
                     </ActionForm>
-                  </details>
+                  </Disclosure>
                 </div>
               );
             })}
@@ -138,8 +139,8 @@ export function MentorView({ cohort, projects, submissions, students, requests, 
           <Card>
             <CardHeader><CardTitle>Invite links</CardTitle><CardDescription>Anyone with a link can join in that role.</CardDescription></CardHeader>
             <CardContent>
-              <Field label={<Label htmlFor="invite-student">For students</Label>}><Input id="invite-student" readOnly value={invites.student} /></Field>
-              <Field label={<Label htmlFor="invite-mentor">For mentors only</Label>}><Input id="invite-mentor" readOnly value={invites.mentor} /></Field>
+              <Field label={<Label htmlFor="invite-student">For students</Label>}><CopyField id="invite-student" value={invites.student} /></Field>
+              <Field label={<Label htmlFor="invite-mentor">For mentors only</Label>}><CopyField id="invite-mentor" value={invites.mentor} /></Field>
             </CardContent>
           </Card>
         ) : null}
@@ -164,8 +165,8 @@ export function MentorView({ cohort, projects, submissions, students, requests, 
           <CardContent>
             <ActionForm action={updateCohort}>
               <input type="hidden" name="cohortId" value={cohort.id} />
-              <Field label={<Label htmlFor="deadline">Deadline, in your local time</Label>} hint="Leave empty for no deadline."><DeadlineInput initial={cohort.deadline} /></Field>
-              <Field label={<Label htmlFor="attempts">Attempts per student</Label>}><Input id="attempts" name="attempts" type="number" min={1} max={20} required defaultValue={cohort.max_attempts} /></Field>
+              <Field label={<Label htmlFor="deadline">Deadline, in your local time</Label>} hint="Leave empty for no deadline."><DateTimePicker id="deadline" name="deadline" defaultValue={cohort.deadline} /></Field>
+              <Field label={<Label htmlFor="attempts">Attempts per student</Label>}><NumberInput id="attempts" name="attempts" min={1} max={20} required defaultValue={cohort.max_attempts} /></Field>
               <Field label={<Label htmlFor="template">What this track expects</Label>} hint="Used to draft each student’s marking criteria.">
                 <Textarea id="template" name="template" maxLength={4000} defaultValue={cohort.criteria_template} />
               </Field>

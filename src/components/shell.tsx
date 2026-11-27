@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { signOut } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { Wordmark } from "@/components/wordmark";
 import { cn } from "@/lib/utils";
 
 export function Header({ chip, signedIn }: { chip?: string; signedIn?: boolean }) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 px-[4%] py-5">
-      <Link href="/" className="font-display text-[26px] font-bold">Capstone Quest</Link>
+      <Link href="/" className="rounded-xl outline-none focus-visible:outline-4 focus-visible:outline-offset-3 focus-visible:outline-ink">
+        <Wordmark className="h-12 w-auto max-w-full sm:h-14" />
+      </Link>
       <div className="flex flex-wrap items-center gap-3">
         {chip ? <span className="rounded-full border-3 border-ink bg-cream px-4 py-1.5 text-[15px] font-extrabold">{chip}</span> : null}
         {signedIn ? (
