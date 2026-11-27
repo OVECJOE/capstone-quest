@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #05331d;
+  --color-cream: #fff8e6;
+  --color-green: #21e065;
+  --color-mid: #12b552;
+  --color-deep: #0a7a3a;
+  --color-lime: #e4ff5c;
+  --font-sans: "Nunito", ui-rounded, sans-serif;
+  --font-display: "Fredoka", "Nunito", ui-rounded, sans-serif;
+
+  --animate-float: float 5.5s ease-in-out infinite;
+  --animate-hop: hop 3.2s ease-in-out infinite;
+  --animate-ring: ring 1.6s linear infinite;
+  --animate-drift: drift 20s ease-in-out infinite;
+  --animate-flame: flame 0.5s infinite;
+  --animate-blink: blink 4s infinite;
+
+  @keyframes float { 50% { transform: translateY(-12px); } }
+  @keyframes hop { 0%, 70%, 100% { transform: translateY(0); } 82% { transform: translateY(-22px); } }
+  @keyframes ring { to { stroke-dashoffset: -68; } }
+  @keyframes drift { 50% { transform: translateX(60px); } }
+  @keyframes flame { 50% { opacity: 0.45; } }
+  @keyframes blink { 0%, 94%, 100% { opacity: 1; } 96% { opacity: 0; } }
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.15; }
+button, input, textarea, select { font-family: var(--font-sans); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
