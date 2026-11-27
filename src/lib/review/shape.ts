@@ -5,7 +5,8 @@ export function normaliseCriteria(input: Criterion[]): Criterion[] {
   const seen = new Set<string>();
   const items = input
     .map((c) => ({ name: c.name.trim().slice(0, 80), description: c.description.trim().slice(0, 600), points: Math.max(0, c.points) }))
-    .filter((c) => c.name && c.points > 0 && !seen.has(c.name) && seen.add(c.name))
+    // Scores are matched to criteria ignoring case, so names must differ by more than case.
+    .filter((c) => c.name && c.points > 0 && !seen.has(c.name.toLowerCase()) && seen.add(c.name.toLowerCase()))
     .slice(0, 8);
   const total = items.reduce((sum, c) => sum + c.points, 0);
   if (!items.length || !Number.isFinite(total)) throw new Error("The draft had no usable criteria");

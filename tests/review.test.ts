@@ -4,13 +4,16 @@ import { isPublicAddress } from "../src/lib/review/address.ts";
 import { earnedBadges } from "../src/lib/badges.ts";
 import { journey } from "../src/lib/journey.ts";
 import { safePath } from "../src/lib/paths.ts";
+import { addMonths, calendarDays, combine } from "../src/lib/calendar.ts";
+import { clean, inviteCode } from "../src/lib/forms.ts";
+import { problem } from "../src/lib/validity.ts";
 import { strToU8, zipSync } from "fflate";
-import { lateReadWarning } from "../src/lib/review/late.ts";
+import { isStale, lateReadWarning } from "../src/lib/review/late.ts";
 import { readZip } from "../src/lib/review/zip.ts";
 import { InputError } from "../src/lib/review/types.ts";
 import { parseRepoLink } from "../src/lib/review/links.ts";
 import { checkLive, pageText } from "../src/lib/review/live.ts";
-import { secretFiles, selectFiles, LIMITS } from "../src/lib/review/select.ts";
+import { secretFiles, selectFiles, selectGistFiles, LIMITS } from "../src/lib/review/select.ts";
 import { normaliseCriteria, normaliseScores } from "../src/lib/review/shape.ts";
 
 test("accepts repository and gist links", () => {
@@ -136,4 +139,53 @@ test("badges follow the record", () => {
   assert.deepEqual(ids("approved", [{ attempt: 1, status: "graded", grades: grade(60, true) }]), ["approval", "readme"]);
   assert.deepEqual(ids("approved", [{ attempt: 2, status: "graded", grades: grade(70) }, { attempt: 1, status: "graded", grades: grade(60) }]), ["approval", "comeback"]);
   assert.deepEqual(ids("approved", [{ attempt: 1, status: "graded", grades: grade(70) }, { attempt: 2, status: "graded", grades: grade(60) }]), ["approval"]);
+});
+
+test("typed text keeps the length the screen counted", () => {
+  assert.equal(clean("  one\r\ntwo\rthree  "), "one\ntwo\nthree");
+  assert.equal(clean(null), "");
+});
+
+test("invite codes are found in pasted links", () => {
+  for (const pasted of ["abc123", " abc123 ", "https://app.test/join/abc123", "https://app.test/join/abc123/",
+    "https://app.test/join/abc123?utm_source=mail", "https://app.test/join/abc123/#top"]) {
+    assert.equal(inviteCode(pasted), "abc123", pasted);
+  }
+});
+
+test("a gist with nothing but unusual files is read, without its secrets", () => {
+  const files = [".env", "prod.env", ".envrc", "id_rsa", "server.PEM", "notes"].map((path) => ({ path, size: 10 }));
+  assert.deepEqual(selectGistFiles(files).map((f) => f.path), ["notes"]);
+  const many = Array.from({ length: 100 }, (_, i) => ({ path: `note${i}`, size: 50_000 }));
+  assert.ok(selectGistFiles(many).reduce((s, f) => s + f.size, 0) <= LIMITS.totalBytes);
+});
+
+test("criteria names differ by more than case", () => {
+  const out = normaliseCriteria([{ name: "Tests", description: "", points: 50 }, { name: "tests", description: "", points: 50 }]);
+  assert.deepEqual(out.map((c) => [c.name, c.points]), [["Tests", 100]]);
+});
+
+test("only an old run can be taken over", () => {
+  const now = Date.parse("2026-01-01T10:10:00Z");
+  assert.equal(isStale("2026-01-01T10:05:00Z", now), false);
+  assert.equal(isStale("2026-01-01T10:03:00Z", now), true);
+  assert.equal(isStale(null, now), true);
+});
+
+test("the calendar covers whole weeks and clamps short months", () => {
+  const days = calendarDays(new Date(2026, 1, 15));
+  assert.equal(days.length % 7, 0);
+  assert.equal(days[0].getDay(), 1);
+  assert.equal(days.filter((d) => d.getMonth() === 1).length, 28);
+  assert.equal(addMonths(new Date(2026, 0, 31), 1).getDate(), 28);
+  assert.equal(addMonths(new Date(2026, 0, 15), -1).getFullYear(), 2025);
+  const moment = combine(new Date(2026, 2, 4), "99", "");
+  assert.deepEqual([moment.getDate(), moment.getHours(), moment.getMinutes()], [4, 23, 0]);
+});
+
+test("field problems are explained plainly", () => {
+  const validity = { valueMissing: false, typeMismatch: false, tooShort: false, customError: false };
+  assert.match(problem({ type: "file", validationMessage: "", validity: { ...validity, valueMissing: true } }), /file/);
+  assert.match(problem({ type: "url", validationMessage: "", validity: { ...validity, typeMismatch: true } }), /https/);
+  assert.equal(problem({ type: "text", validationMessage: "Too big", validity: { ...validity, customError: true } }), "Too big");
 });

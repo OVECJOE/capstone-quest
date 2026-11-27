@@ -25,7 +25,7 @@ export function CharacterPicker({ initial }: { initial: Avatar | null }) {
               <fieldset><legend className="mb-2 font-extrabold">Body colour</legend>
                 <RadioGroup name="body" value={avatar.body} onValueChange={(body) => setAvatar((a) => ({ ...a, body: body as Avatar["body"] }))}>
                   {Object.entries(BODY_COLOURS).map(([key, colour]) => (
-                    <RadioGroupItem key={key} value={key} className="flex items-center gap-2">
+                    <RadioGroupItem key={key} value={key} >
                       <span aria-hidden="true" className="size-5 rounded-full border-2 border-ink" style={{ background: colour.left }} />{colour.name}
                     </RadioGroupItem>
                   ))}

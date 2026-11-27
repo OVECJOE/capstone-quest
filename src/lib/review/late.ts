@@ -6,3 +6,8 @@ export function lateReadWarning(submittedAt: string, pinnedAt: string | null) {
     ? `The code was first read ${minutes} minutes after it was submitted, so it may include later changes. Check the commit dates.`
     : null;
 }
+
+/** Matches claim_review in the database: a run older than six minutes may be taken over. */
+export function isStale(startedAt: string | null, now = Date.now()) {
+  return !startedAt || now - Date.parse(startedAt) > 6 * 60_000;
+}

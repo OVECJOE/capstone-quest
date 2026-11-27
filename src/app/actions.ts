@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { failure, isId, text, type FormState } from "@/lib/forms";
+import { clean, failure, inviteCode, isId, text, type FormState } from "@/lib/forms";
 import { safePath } from "@/lib/paths";
 import { runCriteriaDraft, runReview } from "@/lib/review/engine";
+import { isStale } from "@/lib/review/late";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
 const refresh = (cohortId: string) => revalidatePath(`/c/${cohortId}`, "layout");
@@ -33,7 +34,7 @@ export async function signOut() {
 
 export async function joinCohort(_: FormState, data: FormData): Promise<FormState> {
   // People often paste the whole invite link into the code box.
-  const code = text(data, "code").replace(/\/+$/, "").split("/").pop() ?? "";
+  const code = inviteCode(text(data, "code"));
   if (!code) return { error: "Enter your invite code." };
   const { supabase } = await requireUser(`/join/${encodeURIComponent(code)}`);
   const { data: cohortId, error } = await supabase.rpc("join_cohort", { p_code: code });
@@ -108,13 +109,18 @@ export async function rerunReview(_: FormState, data: FormData): Promise<FormSta
   const submissionId = text(data, "submissionId");
   if (!isId(cohortId) || !isId(submissionId)) return { error: "Reload the page and try again." };
   const { supabase } = await requireUser(`/c/${cohortId}`);
-  const { data: row } = await supabase.from("submissions").select("status, projects(cohort_id)").eq("id", submissionId).maybeSingle();
+  const { data: row } = await supabase.from("submissions").select("status, review_started_at, projects(cohort_id)").eq("id", submissionId).maybeSingle();
   const cohort = (row?.projects as unknown as { cohort_id: string } | null)?.cohort_id;
   if (!row || !cohort) return { error: "Not allowed" };
   const { data: mentor } = await supabase.rpc("is_mentor", { p_cohort: cohort });
   if (!mentor) return { error: "Not allowed" };
   if (row.status === "graded" || row.status === "void") return { error: "This attempt is already closed." };
+  // The database would ignore this request, so say so instead of reporting a new run.
+  if (row.status === "reviewing" && !isStale(row.review_started_at)) {
+    return { error: "A review is already running. Try again if it is still going after six minutes." };
+  }
   after(() => runReview(submissionId));
+  revalidatePath(`/c/${cohortId}/review/${submissionId}`);
   return { done: "Review requested. Reload in about two minutes." };
 }
 
@@ -125,11 +131,11 @@ export async function approveGrade(_: FormState, data: FormData): Promise<FormSt
   const { supabase } = await requireUser(`/c/${cohortId}`);
   const names = data.getAll("name").map(String);
   const scores = data.getAll("score").map(String);
-  const comments = data.getAll("comment").map(String);
+  const comments = data.getAll("comment");
   if (scores.some((s) => !/^\d{1,3}$/.test(s.trim()))) return { error: "Every score needs a whole number." };
   const { error } = await supabase.rpc("approve_grade", {
     p_submission: submissionId,
-    p_scores: names.map((name, i) => ({ name, score: Number(scores[i]), comment: (comments[i] ?? "").trim() })),
+    p_scores: names.map((name, i) => ({ name, score: Number(scores[i]), comment: clean(comments[i]) })),
     p_feedback: text(data, "feedback"),
     p_readme_ok: data.get("readme_ok") === "on",
     p_live_ok: data.get("live_ok") === "on",

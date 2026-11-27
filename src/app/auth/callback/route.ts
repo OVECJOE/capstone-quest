@@ -13,5 +13,6 @@ export async function GET(request: NextRequest) {
     if (!error) return NextResponse.redirect(new URL(next, origin));
     console.error(error);
   }
-  return NextResponse.redirect(new URL("/?signin=failed", origin));
+  // Keep the destination, so trying again still lands on the invite or page they wanted.
+  return NextResponse.redirect(new URL(`/?signin=failed&next=${encodeURIComponent(next)}`, origin));
 }

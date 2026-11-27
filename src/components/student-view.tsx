@@ -1,5 +1,6 @@
 import { proposeProject } from "@/app/actions";
-import { ActionForm, Field } from "@/components/action-form";
+import { ActionForm } from "@/components/action-form";
+import { Field } from "@/components/ui/field";
 import { Badges } from "@/components/badges";
 import { CharacterPicker } from "@/components/character-picker";
 import { CohortWorld } from "@/components/cohort-world";
@@ -11,6 +12,7 @@ import { LocalTime } from "@/components/local-time";
 import { Rubric } from "@/components/rubric";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Disclosure } from "@/components/ui/disclosure";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -84,8 +86,7 @@ export function StudentView({ cohort, project, submissions, plots, avatar, userI
       body: <>
         <LiveRefresh seconds={30} />
         <Proposal project={project} />
-        <details><summary className="cursor-pointer font-extrabold">Change my proposal</summary>
-          <div className="pt-4"><ProposalForm cohortId={cohort.id} project={project} /></div></details>
+        <Disclosure label="Change my proposal"><ProposalForm cohortId={cohort.id} project={project} /></Disclosure>
       </>,
     } : {
       title: "Idea approved", text: "This is what you promised to build.",
@@ -100,7 +101,7 @@ export function StudentView({ cohort, project, submissions, plots, avatar, userI
         ? "Your code is read and your live link is loaded before a mentor sees the draft review."
         : open ? "Follow it on the review step." : "Your latest approved grade counts.",
       body: approved ? <>
-        {handedBack ? <p className="rounded-2xl border-3 border-ink bg-[#FFE1D6] px-5 py-3 font-bold break-words">Attempt handed back: {handedBack.message}</p> : null}
+        {handedBack ? <p className="rounded-2xl border-3 border-ink bg-blush px-5 py-3 font-bold break-words">Attempt handed back: {handedBack.message}</p> : null}
         {canSubmit ? <SubmitForm cohortId={cohort.id} projectId={project.id} userId={userId} /> : null}
         <p className="text-[15px] font-bold">
           {used} of {cohort.max_attempts} attempts used. A mentor approves every grade.
