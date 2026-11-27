@@ -56,7 +56,7 @@ export function MentorView({ cohort, projects, submissions, students, requests, 
           <CardContent>
             {proposals.length ? proposals.map((p) => (
               <div key={p.id} className={row}>
-                <div className="min-w-0"><h3 className="text-xl break-words">{p.title}</h3><p>{name(p.student_id)}{p.criteria ? "" : ", criteria draft not ready"}</p></div>
+                <div className="min-w-0"><h3 className="text-xl break-words">{p.title}</h3><p className="wrap-anywhere">{name(p.student_id)}{p.criteria ? "" : ", criteria draft not ready"}</p></div>
                 <Button asChild size="sm"><Link href={`/c/${cohort.id}/projects/${p.id}`}>Check idea</Link></Button>
               </div>
             )) : <p>Nothing waiting.</p>}
@@ -71,7 +71,7 @@ export function MentorView({ cohort, projects, submissions, students, requests, 
               const project = projects.find((p) => p.id === s.project_id);
               return (
                 <div key={s.id} className={row}>
-                  <div className="min-w-0"><h3 className="text-xl break-words">{project?.title}</h3><p>{project ? name(project.student_id) : ""}, attempt {s.attempt}</p></div>
+                  <div className="min-w-0"><h3 className="text-xl break-words">{project?.title}</h3><p className="wrap-anywhere">{project ? name(project.student_id) : ""}, attempt {s.attempt}</p></div>
                   <div className="flex items-center gap-3">
                     <Badge variant={s.status === "failed" ? "warning" : "secondary"}>{STATUS_NAMES[s.status]}</Badge>
                     <Button asChild size="sm"><Link href={`/c/${cohort.id}/review/${s.id}`}>Open</Link></Button>
@@ -93,7 +93,7 @@ export function MentorView({ cohort, projects, submissions, students, requests, 
                   <input type="hidden" name="cohortId" value={cohort.id} />
                   <input type="hidden" name="userId" value={r.user_id} />
                   <div className={row}>
-                    <div className="min-w-0"><h3 className="text-xl">{r.profiles.full_name || r.profiles.github_login || "Unnamed"}</h3>
+                    <div className="min-w-0"><h3 className="text-xl wrap-anywhere">{r.profiles.full_name || r.profiles.github_login || "Unnamed"}</h3>
                       {r.profiles.github_login ? <ExtLink href={`https://github.com/${r.profiles.github_login}`} /> : null}</div>
                     <div className="flex gap-3">
                       <Button size="sm" name="decision" value="approve">Let in</Button>
@@ -114,8 +114,8 @@ export function MentorView({ cohort, projects, submissions, students, requests, 
               return (
                 <div key={student.user_id} className={row}>
                   <div className="min-w-0">
-                    <h3 className="text-xl">{name(student.user_id)}</h3>
-                    <p className="break-words">{project ? project.title : "No idea yet"}</p>
+                    <h3 className="text-xl wrap-anywhere">{name(student.user_id)}</h3>
+                    <p className="wrap-anywhere">{project ? project.title : "No idea yet"}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
                   {latest?.grades
@@ -127,7 +127,8 @@ export function MentorView({ cohort, projects, submissions, students, requests, 
                       <input type="hidden" name="cohortId" value={cohort.id} />
                       <input type="hidden" name="userId" value={student.user_id} />
                       <p>They lose access straight away and come off the email list. Their work is kept and returns if you let them back in.</p>
-                      <Button size="sm" className="self-start">Yes, remove {name(student.user_id)}</Button>
+                      {/* Names can be long, so this button wraps instead of staying on one line. */}
+                      <Button size="sm" className="max-w-full shrink self-start text-left whitespace-normal wrap-anywhere">Yes, remove {name(student.user_id)}</Button>
                     </ActionForm>
                   </Disclosure>
                 </div>

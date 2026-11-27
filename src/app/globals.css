@@ -50,6 +50,32 @@ input:-webkit-autofill {
 * { scrollbar-color: var(--color-ink) transparent; }
 textarea, [role="dialog"] { scrollbar-width: thin; }
 
+/* One row of tabs. Its edges fade where more is hidden. */
+@property --fade-start { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --fade-end { syntax: "<length>"; inherits: false; initial-value: 0px; }
+
+[data-slot="tabs-list"] {
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent);
+  transition: --fade-start 0.3s, --fade-end 0.3s;
+}
+[data-slot="tabs-list"]::-webkit-scrollbar { display: none; }
+[data-slot="tabs-list"][data-more-start] { --fade-start: 36px; }
+[data-slot="tabs-list"][data-more-end] { --fade-end: 36px; }
+
+/* Where the browser supports it, tabs swing in and out of the row as it scrolls. */
+@supports (animation-timeline: view()) {
+  [data-slot="tabs-trigger"] {
+    /* Scrolling sets the pace, but the duration must not be zero or the swing jumps.
+       The second only fills forwards, or it would cancel the first before a tab starts to leave. */
+    animation: tab-enter 1ms linear both, tab-leave 1ms linear forwards;
+    animation-timeline: view(inline 0px);
+    animation-range: entry, exit;
+  }
+}
+@keyframes tab-enter { from { opacity: 0.5; transform: perspective(300px) rotateY(40deg) scale(0.82); } }
+@keyframes tab-leave { to { opacity: 0.5; transform: perspective(300px) rotateY(-40deg) scale(0.82); } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
